@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const url = require('url');
 const qs = require('querystring');
+const sanitizeHtml = require('sanitize-html');
 
 const template = {
         List: function (fileList){
@@ -44,6 +45,7 @@ const app = http.createServer(function (request, response) {
 
             fs.readdir('data/', function (err, data){
                 const list = template.List(data);
+
                 //메인화면에서는 create(새 게시글 작성)만 가능하게
                 const html = template.HTML(title, list, description,'<a href="create">create</a>');
                 response.writeHead(200)
@@ -54,9 +56,11 @@ const app = http.createServer(function (request, response) {
                 fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description){
                     const title = queryData.id
                     const list = template.List(data);
-                    const html = template.HTML(title,list,description,`<a href="create">create</a> <a href="update?id=${title}">update</a>
+                    const sanitizeTitle = sanitizeHtml(title);
+                    const sanitizeDescription = sanitizeHtml(description);
+                    const html = template.HTML(title,list,sanitizeDescription,`<a href="create">create</a> <a href="update?id=${sanitizeTitle}">update</a>
                                       <form action="delete_process" method="post">
-                                          <p><input type="hidden" name="id" value="${title}"></p>
+                                          <p><input type="hidden" name="id" value="${sanitizeTitle}"></p>
                                           <p><input type="submit" value="delete"></p>
                                       </form>`);
                     response.writeHead(200)
